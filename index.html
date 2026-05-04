@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống An sinh Xã hội Số - Phường Hòa Bình</title>
+    
+    <!-- Frameworks & Fonts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        :root { --primary: #da251d; --secondary: #1e293b; --accent: #0ea5e9; }
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #1e293b; }
+        
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 1.25rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+        .stat-card { transition: all 0.3s ease; border-bottom: 4px solid transparent; }
+        .stat-card:hover { transform: translateY(-5px); border-bottom-color: var(--primary); }
+        
+        .table-modern thead { background: #f8fafc; position: sticky; top: 0; z-index: 10; }
+        .table-modern th { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; padding: 1rem; }
+        .table-modern td { vertical-align: middle; padding: 1rem; border-color: #f1f5f9; font-size: 0.875rem; }
+
+        .status-badge { padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; }
+        .status-pending { background: #fef3c7; color: #92400e; }
+        .status-processing { background: #e0f2fe; color: #075985; }
+        .status-completed { background: #dcfce7; color: #166534; }
+
+        #map { height: 400px; border-radius: 1.25rem; z-index: 1; }
+        .hidden-element { display: none !important; }
+
+        @media (max-width: 768px) {
+            .header-title { font-size: 1rem !important; }
+            .main-content { padding: 1rem !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-900 to-red-900 px-4">
+        <div class="w-full max-w-md glass-card p-10">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-red-600 text-white text-3xl shadow-2xl mb-4 animate-bounce">
+                    <i class="fa-solid fa-shield-heart"></i>
+                </div>
+                <h1 class="text-2xl font-black text-slate-800">AN SINH XÃ HỘI SỐ</h1>
+                <p class="text-slate-500 text-sm">Hệ thống quản lý hồ sơ điện tử Phường Hòa Bình</p>
+            </div>
+            <form id="login-form" class="space-y-4">
+                <div class="relative">
+                    <i class="fa-solid fa-user absolute left-4 top-4 text-slate-400"></i>
+                    <input id="username" type="text" class="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-red-500 outline-none transition" placeholder="Tên đăng nhập" required>
+                </div>
+                <div class="relative">
+                    <i class="fa-solid fa-lock absolute left-4 top-4 text-slate-400"></i>
+                    <input id="password" type="password" class="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-red-500 outline-none transition" placeholder="Mật khẩu" required>
+                </div>
+                <button type="submit" class="w-full py-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-lg shadow-lg shadow-red-500/30 transition-all">
+                    ĐĂNG NHẬP HỆ THỐNG
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app-shell" class="hidden-element">
+        <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
+            <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Bi%E1%BB%83u_tr%C6%B0ng_M%E1%BA%B7t_tr%E1%BA%ADn_T%E1%BB%95_qu%E1%BB%91c_Vi%E1%BB%87t_Nam.svg/500px-Bi%E1%BB%83u_tr%C6%B0ng_M%E1%BA%B7t_tr%E1%BA%ADn_T%E1%BB%95_qu%E1%BB%91c_Vi%E1%BB%87t_Nam.svg.png" class="h-12 w-12 object-contain" alt="Logo">
+                    <div>
+                        <h2 class="text-[10px] font-bold text-red-600 uppercase tracking-widest leading-tight">Hệ thống chuyển đổi số</h2>
+                        <h1 class="header-title text-lg font-black text-slate-800 leading-tight">AN SINH XÃ HỘI PHƯỜNG HÒA BÌNH</h1>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-right hidden md:block">
+                        <div id="user-display" class="text-sm font-bold text-slate-800">Cán bộ xử lý</div>
+                        <div id="role-badge" class="text-[10px] px-2 py-0.5 rounded bg-blue-100 text-blue-600 font-bold uppercase text-center">Role: canbo</div>
+                    </div>
+                    <button id="logout-btn" class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 transition flex items-center justify-center">
+                        <i class="fa-solid fa-power-off"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-content max-w-7xl mx-auto px-4 py-8">
+            <!-- Thống kê -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="glass-card stat-card p-6 border-l-4 border-red-600">
+                    <p class="text-slate-500 text-xs font-bold uppercase">Tổng hồ sơ</p>
+                    <h3 id="stat-total" class="text-3xl font-black text-slate-800 mt-2">0</h3>
+                </div>
+                <div class="glass-card stat-card p-6 border-l-4 border-amber-500">
+                    <p class="text-slate-500 text-xs font-bold uppercase">Cần hỗ trợ khẩn cấp</p>
+                    <h3 id="stat-urgent" class="text-3xl font-black text-slate-800 mt-2">0</h3>
+                </div>
+                <div class="glass-card stat-card p-6 border-l-4 border-emerald-500">
+                    <p class="text-slate-500 text-xs font-bold uppercase">Đã xử lý xong</p>
+                    <h3 id="stat-done" class="text-3xl font-black text-slate-800 mt-2">0</h3>
+                </div>
+                <div class="glass-card stat-card p-6 border-l-4 border-blue-500">
+                    <p class="text-slate-500 text-xs font-bold uppercase">Đang xác minh</p>
+                    <h3 id="stat-pending" class="text-3xl font-black text-slate-800 mt-2">0</h3>
+                </div>
+            </div>
+
+            <!-- GIS & Chart Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+                <div class="lg:col-span-2 glass-card p-6">
+                    <h5 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-map-location-dot text-red-600"></i> BẢN ĐỒ AN SINH SỐ (KHU VỰC PHƯỜNG HÒA BÌNH)
+                    </h5>
+                    <div id="map"></div>
+                </div>
+                <div class="glass-card p-6">
+                    <h5 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-blue-600"></i> HÌNH THỨC HỖ TRỢ
+                    </h5>
+                    <canvas id="supportChart" class="max-h-[300px]"></canvas>
+                </div>
+            </div>
+
+            <!-- Table Data -->
+            <div class="glass-card overflow-hidden">
+                <div class="p-6 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4">
+                    <h5 class="font-bold text-slate-800 m-0">DANH SÁCH HỒ SƠ CHI TIẾT</h5>
+                    <div class="flex gap-2">
+                        <input type="text" id="search-input" class="px-4 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-red-500" placeholder="Tìm tên, CCCD...">
+                        <button onclick="exportData()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold"><i class="fa-solid fa-file-export mr-2"></i>Xuất Excel</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-modern table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Đối tượng</th>
+                                <th>Thông tin định danh</th>
+                                <th>Hoàn cảnh / Địa chỉ</th>
+                                <th>Hình thức hỗ trợ</th>
+                                <th>Tình trạng xử lý</th>
+                                <th class="text-center">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-table-body">
+                            <!-- Dữ liệu render từ JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const CONFIG = {
+            CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdrdYekjXPY9SzlbGcf4IfFjCTjm6cLB8bfCKl20AeU5sJLYKSg7NU_9Q94NGnEHs4yhf5VZawwlKt/pub?gid=340520941&single=true&output=csv',
+            STORAGE_KEY: 'ansinh_storage_v1'
+        };
+
+        let rawData = [];
+        let map, supportChart;
+
+        // --- ĐĂNG NHẬP & PHÂN QUYỀN ---
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const user = document.getElementById('username').value;
+            if(user === 'admin' || user === 'canbo') {
+                localStorage.setItem('user_role', user);
+                initApp();
+            } else {
+                alert('Tài khoản demo: canbo hoặc admin');
+            }
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('user_role');
+            location.reload();
+        });
+
+        function initApp() {
+            const role = localStorage.getItem('user_role');
+            if(!role) return;
+
+            document.getElementById('login-screen').classList.add('hidden-element');
+            document.getElementById('app-shell').classList.remove('hidden-element');
+            document.getElementById('role-badge').innerText = `${role}`;
+            
+            initMap();
+            loadData();
+        }
+
+        // --- BẢN ĐỒ GIS (Hòa Bình, Phú Thọ) ---
+        function initMap() {
+            // Tọa độ giả định khu vực Phường Hòa Bình, Tỉnh Phú Thọ
+            map = L.map('map').setView([21.3125, 105.2155], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        }
+
+        // --- XỬ LÝ DỮ LIỆU ---
+        async function loadData() {
+            try {
+                const response = await fetch(CONFIG.CSV_URL);
+                const csvText = await response.text();
+                
+                Papa.parse(csvText, {
+                    header: true,
+                    complete: (results) => {
+                        rawData = results.data;
+                        renderUI();
+                    }
+                });
+            } catch (err) {
+                console.error("Lỗi tải dữ liệu", err);
+            }
+        }
+
+        function renderUI() {
+            const tbody = document.getElementById('data-table-body');
+            const savedStates = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEY) || '{}');
+            tbody.innerHTML = '';
+
+            let counts = { total: 0, urgent: 0, done: 0, supportTypes: {} };
+
+            rawData.forEach((row, index) => {
+                if(!row['Họ và tên']) return;
+                counts.total++;
+                
+                // Lấy trạng thái đã lưu hoặc mặc định từ CSV
+                const currentState = savedStates[index] || row['tình trạng'] || 'Đang xác minh';
+                if(currentState === 'Khẩn cấp') counts.urgent++;
+                if(currentState === 'Đã hoàn thành') counts.done++;
+                
+                // Thống kê biểu đồ
+                const type = row['hình thức hỗ trợ'] || 'Chưa phân loại';
+                counts.supportTypes[type] = (counts.supportTypes[type] || 0) + 1;
+
+                // Render Table
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div class="font-extrabold text-slate-800">${row['Họ và tên']}</div>
+                        <div class="text-[10px] text-slate-400">Chủ hộ: ${row['Họ và tên chủ hộ'] || 'N/A'}</div>
+                    </td>
+                    <td>
+                        <div class="text-xs font-medium"><i class="fa-solid fa-id-card mr-1 text-blue-500"></i> ${row['Số CCCD']}</div>
+                        <div class="text-xs font-medium"><i class="fa-solid fa-phone mr-1 text-green-500"></i> ${row['Số điện thọai']}</div>
+                    </td>
+                    <td>
+                        <div class="text-xs text-slate-600 max-w-[200px] truncate" title="${row['Hoàn cảnh gia đình']}">${row['Hoàn cảnh gia đình']}</div>
+                        <div class="text-[10px] text-slate-400"><i class="fa-solid fa-location-dot mr-1"></i> ${row['Hộ khẩu thường trú']}</div>
+                    </td>
+                    <td>
+                        <span class="px-2 py-1 bg-blue-50 text-blue-600 rounded text-[10px] font-bold border border-blue-100">${row['hình thức hỗ trợ']}</span>
+                    </td>
+                    <td>
+                        <select onchange="updateStatus(${index}, this.value)" class="form-select form-select-sm text-xs font-bold rounded-lg border-slate-200">
+                            <option value="Đang xác minh" ${currentState === 'Đang xác minh' ? 'selected' : ''}>⏳ Đang xác minh</option>
+                            <option value="Khẩn cấp" ${currentState === 'Khẩn cấp' ? 'selected' : ''}>🚨 Khẩn cấp</option>
+                            <option value="Đang xử lý" ${currentState === 'Đang xử lý' ? 'selected' : ''}>🛠️ Đang xử lý</option>
+                            <option value="Đã hoàn thành" ${currentState === 'Đã hoàn thành' ? 'selected' : ''}>✅ Đã hoàn thành</option>
+                        </select>
+                    </td>
+                    <td class="text-center">
+                        <button onclick="viewDetail(${index})" class="text-blue-600 hover:text-blue-800 p-2"><i class="fa-solid fa-eye"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                // Thêm Marker vào bản đồ (tọa độ ngẫu nhiên quanh phường để demo GIS)
+                addMapMarker(row, currentState);
+            });
+
+            // Cập nhật thống kê
+            document.getElementById('stat-total').innerText = counts.total;
+            document.getElementById('stat-urgent').innerText = counts.urgent;
+            document.getElementById('stat-done').innerText = counts.done;
+            document.getElementById('stat-pending').innerText = counts.total - counts.done;
+
+            renderChart(counts.supportTypes);
+        }
+
+        function addMapMarker(row, status) {
+            // Demo GIS: Tạo tọa độ giả lập quanh Phường Hòa Bình
+            const lat = 21.3125 + (Math.random() - 0.5) * 0.01;
+            const lng = 105.2155 + (Math.random() - 0.5) * 0.01;
+            
+            const color = status === 'Khẩn cấp' ? 'red' : (status === 'Đã hoàn thành' ? 'green' : 'blue');
+            const circle = L.circleMarker([lat, lng], {
+                radius: 8,
+                fillColor: color,
+                color: "#fff",
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map);
+
+            circle.bindPopup(`<b>${row['Họ và tên']}</b><br>${row['hình thức hỗ trợ']}<br>TT: ${status}`);
+        }
+
+        function renderChart(data) {
+            const ctx = document.getElementById('supportChart').getContext('2d');
+            if(supportChart) supportChart.destroy();
+            
+            supportChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        data: Object.values(data),
+                        backgroundColor: ['#da251d', '#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6']
+                    }]
+                },
+                options: { 
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
+                }
+            });
+        }
+
+        // --- XỬ LÝ TRẠNG THÁI (LƯU STORAGE) ---
+        function updateStatus(index, newValue) {
+            const savedStates = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEY) || '{}');
+            savedStates[index] = newValue;
+            localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(savedStates));
+            
+            // Thông báo lưu tạm thành công
+            const toast = document.createElement('div');
+            toast.className = "fixed bottom-5 right-5 bg-slate-800 text-white px-6 py-3 rounded-xl shadow-2xl z-[9999] animate-bounce";
+            toast.innerHTML = `<i class="fa-solid fa-floppy-disk mr-2 text-emerald-400"></i> Đã lưu tạm trạng thái hồ sơ #${index+1}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+
+            // Cập nhật lại thống kê mà không load lại trang
+            setTimeout(renderUI, 500); 
+        }
+
+        function viewDetail(index) {
+            const data = rawData[index];
+            alert(`CHI TIẾT HỒ SƠ:\n- Họ tên: ${data['Họ và tên']}\n- Hoàn cảnh: ${data['Hoàn cảnh gia đình']}\n- CCCD: ${data['Số CCCD']}`);
+        }
+
+        // Khởi tạo app nếu đã có session
+        window.onload = tryAutoLogin;
+        function tryAutoLogin() {
+            if(localStorage.getItem('user_role')) initApp();
+        }
+    </script>
+</body>
+</html>
