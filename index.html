@@ -18,142 +18,145 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <style>
-        :root { --primary: #da251d; --secondary: #1e293b; --accent: #0ea5e9; }
-        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; color: #1e293b; }
+        :root { --primary: #da251d; --secondary: #1e293b; --emerald: #10b981; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; overflow-x: hidden; }
         
-        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 1.25rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
-        .stat-card { transition: all 0.3s ease; border-bottom: 4px solid transparent; }
-        .stat-card:hover { transform: translateY(-5px); border-bottom-color: var(--primary); }
-        
-        .table-modern thead { background: #f8fafc; position: sticky; top: 0; z-index: 10; }
-        .table-modern th { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; padding: 1rem; }
-        .table-modern td { vertical-align: middle; padding: 1rem; border-color: #f1f5f9; font-size: 0.875rem; }
+        /* Modern UI Elements */
+        .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .table-modern thead { background: #f1f5f9; position: sticky; top: 0; z-index: 10; }
+        .table-modern th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; padding: 1rem; border: none; }
+        .table-modern td { vertical-align: middle; padding: 1rem; border-color: #f1f5f9; font-size: 0.85rem; }
 
-        .status-badge { padding: 0.35rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; }
-        .status-pending { background: #fef3c7; color: #92400e; }
-        .status-processing { background: #e0f2fe; color: #075985; }
-        .status-completed { background: #dcfce7; color: #166534; }
+        /* Role Badge Styles */
+        .badge-role { padding: 4px 12px; border-radius: 6px; font-weight: 700; font-size: 10px; text-transform: uppercase; }
+        .badge-admin { background: #fee2e2; color: #dc2626; }
+        .badge-canbo { background: #dcfce7; color: #16a34a; }
+        .badge-user { background: #e0f2fe; color: #0284c7; }
 
-        #map { height: 400px; border-radius: 1.25rem; z-index: 1; }
-        .hidden-element { display: none !important; }
+        /* Modal Custom */
+        .modal-content { border: none; border-radius: 1.5rem; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+        .modal-header { background: #f8fafc; border-bottom: 1px solid #f1f5f9; padding: 1.5rem; }
 
+        #map { height: 350px; border-radius: 1rem; z-index: 1; border: 1px solid #e2e8f0; }
+        .hidden-role { display: none !important; }
+        .img-preview { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .img-preview:hover { transform: scale(1.2); }
+
+        /* Responsive Mobile */
         @media (max-width: 768px) {
+            .table-responsive { border: 0; }
             .header-title { font-size: 1rem !important; }
-            .main-content { padding: 1rem !important; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Login Screen -->
-    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-900 to-red-900 px-4">
-        <div class="w-full max-w-md glass-card p-10">
+    <!-- MÀN HÌNH ĐĂNG NHẬP -->
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-slate-900 px-4">
+        <div class="w-full max-w-md glass-card p-8 animate-in fade-in zoom-in duration-500">
             <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-red-600 text-white text-3xl shadow-2xl mb-4 animate-bounce">
-                    <i class="fa-solid fa-shield-heart"></i>
+                <div class="w-20 h-20 bg-red-600 rounded-3xl flex items-center justify-center text-white text-3xl mx-auto mb-4 shadow-xl shadow-red-500/20">
+                    <i class="fa-solid fa-shield-halved"></i>
                 </div>
                 <h1 class="text-2xl font-black text-slate-800">AN SINH XÃ HỘI SỐ</h1>
-                <p class="text-slate-500 text-sm">Hệ thống quản lý hồ sơ điện tử Phường Hòa Bình</p>
+                <p class="text-slate-500 text-sm mt-1">Đăng nhập để truy cập hệ thống</p>
             </div>
             <form id="login-form" class="space-y-4">
-                <div class="relative">
-                    <i class="fa-solid fa-user absolute left-4 top-4 text-slate-400"></i>
-                    <input id="username" type="text" class="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-red-500 outline-none transition" placeholder="Tên đăng nhập" required>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Tên tài khoản</label>
+                    <input id="username" type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-red-500 outline-none transition" placeholder="admin / canbo / user" required>
                 </div>
-                <div class="relative">
-                    <i class="fa-solid fa-lock absolute left-4 top-4 text-slate-400"></i>
-                    <input id="password" type="password" class="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-red-500 outline-none transition" placeholder="Mật khẩu" required>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2 ml-1">Mật khẩu</label>
+                    <input id="password" type="password" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-red-500 outline-none transition" placeholder="••••••••" required>
                 </div>
-                <button type="submit" class="w-full py-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-lg shadow-lg shadow-red-500/30 transition-all">
-                    ĐĂNG NHẬP HỆ THỐNG
+                <button type="submit" class="w-full py-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg transition-all active:scale-95">
+                    ĐĂNG NHẬP
                 </button>
             </form>
+            <div class="mt-6 p-4 bg-slate-50 rounded-xl">
+                <p class="text-[10px] font-bold text-slate-400 uppercase mb-2">Tài khoản demo:</p>
+                <div class="grid grid-cols-3 gap-2 text-[10px] text-slate-600">
+                    <div>Admin: <b>admin</b></div>
+                    <div>Cán bộ: <b>canbo</b></div>
+                    <div>Dân: <b>user</b></div>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-2 italic text-center">*Mật khẩu chung: [tên tài khoản]@2026</p>
+            </div>
         </div>
     </div>
 
-    <!-- Main App -->
-    <div id="app-shell" class="hidden-element">
-        <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
-            <div class="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Bi%E1%BB%83u_tr%C6%B0ng_M%E1%BA%B7t_tr%E1%BA%ADn_T%E1%BB%95_qu%E1%BB%91c_Vi%E1%BB%87t_Nam.svg/500px-Bi%E1%BB%83u_tr%C6%B0ng_M%E1%BA%B7t_tr%E1%BA%ADn_T%E1%BB%95_qu%E1%BB%91c_Vi%E1%BB%87t_Nam.svg.png" class="h-12 w-12 object-contain" alt="Logo">
+    <!-- GIAO DIỆN CHÍNH -->
+    <div id="app-shell" class="hidden-role">
+        <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-slate-200">
+            <div class="max-w-[1600px] mx-auto px-4 h-20 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Emblem_of_Vietnam.svg/512px-Emblem_of_Vietnam.svg.png" class="h-10 w-10" alt="Quốc huy">
                     <div>
-                        <h2 class="text-[10px] font-bold text-red-600 uppercase tracking-widest leading-tight">Hệ thống chuyển đổi số</h2>
-                        <h1 class="header-title text-lg font-black text-slate-800 leading-tight">AN SINH XÃ HỘI PHƯỜNG HÒA BÌNH</h1>
+                        <h1 class="header-title text-lg font-black text-slate-800 leading-none">PHƯỜNG HÒA BÌNH</h1>
+                        <p class="text-[10px] font-bold text-red-600 uppercase mt-1 tracking-tighter">Hệ thống An sinh Xã hội số</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
-                    <div class="text-right hidden md:block">
-                        <div id="user-display" class="text-sm font-bold text-slate-800">Cán bộ xử lý</div>
-                        <div id="role-badge" class="text-[10px] px-2 py-0.5 rounded bg-blue-100 text-blue-600 font-bold uppercase text-center">Role: canbo</div>
+                    <div class="text-right">
+                        <div id="display-name" class="text-sm font-bold text-slate-800">Họ và tên</div>
+                        <span id="role-label" class="badge-role badge-admin">Admin</span>
                     </div>
-                    <button id="logout-btn" class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 transition flex items-center justify-center">
+                    <button id="logout-btn" class="p-2.5 rounded-xl bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-600 transition">
                         <i class="fa-solid fa-power-off"></i>
                     </button>
                 </div>
             </div>
         </nav>
 
-        <main class="main-content max-w-7xl mx-auto px-4 py-8">
+        <main class="max-w-[1600px] mx-auto px-4 py-8">
             <!-- Thống kê -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="glass-card stat-card p-6 border-l-4 border-red-600">
-                    <p class="text-slate-500 text-xs font-bold uppercase">Tổng hồ sơ</p>
-                    <h3 id="stat-total" class="text-3xl font-black text-slate-800 mt-2">0</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="glass-card p-6 border-l-4 border-red-600">
+                    <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest">Tổng hồ sơ</p>
+                    <h3 id="stat-total" class="text-3xl font-black mt-1">0</h3>
                 </div>
-                <div class="glass-card stat-card p-6 border-l-4 border-amber-500">
-                    <p class="text-slate-500 text-xs font-bold uppercase">Cần hỗ trợ khẩn cấp</p>
-                    <h3 id="stat-urgent" class="text-3xl font-black text-slate-800 mt-2">0</h3>
+                <div class="glass-card p-6 border-l-4 border-amber-500">
+                    <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest">Đang chờ xử lý</p>
+                    <h3 id="stat-pending" class="text-3xl font-black mt-1 text-amber-600">0</h3>
                 </div>
-                <div class="glass-card stat-card p-6 border-l-4 border-emerald-500">
-                    <p class="text-slate-500 text-xs font-bold uppercase">Đã xử lý xong</p>
-                    <h3 id="stat-done" class="text-3xl font-black text-slate-800 mt-2">0</h3>
+                <div class="glass-card p-6 border-l-4 border-blue-600">
+                    <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest">Đang xử lý</p>
+                    <h3 id="stat-processing" class="text-3xl font-black mt-1 text-blue-600">0</h3>
                 </div>
-                <div class="glass-card stat-card p-6 border-l-4 border-blue-500">
-                    <p class="text-slate-500 text-xs font-bold uppercase">Đang xác minh</p>
-                    <h3 id="stat-pending" class="text-3xl font-black text-slate-800 mt-2">0</h3>
+                <div class="glass-card p-6 border-l-4 border-emerald-600">
+                    <p class="text-slate-500 text-[10px] font-black uppercase tracking-widest">Đã hoàn thành</p>
+                    <h3 id="stat-completed" class="text-3xl font-black mt-1 text-emerald-600">0</h3>
                 </div>
             </div>
 
-            <!-- GIS & Chart Row -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
                 <div class="lg:col-span-2 glass-card p-6">
-                    <h5 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-map-location-dot text-red-600"></i> BẢN ĐỒ AN SINH SỐ (KHU VỰC PHƯỜNG HÒA BÌNH)
-                    </h5>
+                    <h5 class="text-sm font-bold text-slate-800 mb-4"><i class="fa-solid fa-map-location-dot mr-2 text-red-600"></i>BẢN ĐỒ PHÂN BỐ AN SINH (GIS)</h5>
                     <div id="map"></div>
                 </div>
                 <div class="glass-card p-6">
-                    <h5 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-chart-pie text-blue-600"></i> HÌNH THỨC HỖ TRỢ
-                    </h5>
-                    <canvas id="supportChart" class="max-h-[300px]"></canvas>
+                    <h5 class="text-sm font-bold text-slate-800 mb-4"><i class="fa-solid fa-chart-pie mr-2 text-blue-600"></i>CƠ CẤU HỖ TRỢ</h5>
+                    <canvas id="supportChart"></canvas>
                 </div>
             </div>
 
-            <!-- Table Data -->
+            <!-- Bảng dữ liệu -->
             <div class="glass-card overflow-hidden">
-                <div class="p-6 border-b border-slate-100 flex flex-wrap justify-between items-center gap-4">
-                    <h5 class="font-bold text-slate-800 m-0">DANH SÁCH HỒ SƠ CHI TIẾT</h5>
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-white">
+                    <h5 class="text-sm font-bold text-slate-800 m-0">DANH SÁCH HỒ SƠ CHI TIẾT</h5>
                     <div class="flex gap-2">
-                        <input type="text" id="search-input" class="px-4 py-2 rounded-lg border text-sm outline-none focus:ring-2 focus:ring-red-500" placeholder="Tìm tên, CCCD...">
-                        <button onclick="exportData()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-bold"><i class="fa-solid fa-file-export mr-2"></i>Xuất Excel</button>
+                        <input type="text" id="search-box" class="px-4 py-2 border rounded-lg text-xs outline-none focus:ring-2 focus:ring-red-500 w-64" placeholder="Tìm kiếm theo tên, CCCD...">
+                        <button onclick="reloadData()" class="p-2 bg-slate-100 rounded-lg text-slate-600 hover:bg-slate-200"><i class="fa-solid fa-rotate"></i></button>
                     </div>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-modern table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Đối tượng</th>
-                                <th>Thông tin định danh</th>
-                                <th>Hoàn cảnh / Địa chỉ</th>
-                                <th>Hình thức hỗ trợ</th>
-                                <th>Tình trạng xử lý</th>
-                                <th class="text-center">Thao tác</th>
-                            </tr>
+                <div class="table-responsive max-h-[700px]">
+                    <table class="table table-modern table-hover mb-0" id="main-table">
+                        <thead id="table-head">
+                            <!-- Header render dynamic dựa trên role -->
                         </thead>
-                        <tbody id="data-table-body">
-                            <!-- Dữ liệu render từ JS -->
+                        <tbody id="table-body">
+                            <!-- Dữ liệu render dynamic -->
                         </tbody>
                     </table>
                 </div>
@@ -161,199 +164,268 @@
         </main>
     </div>
 
+    <!-- MODAL XỬ LÝ HỒ SƠ (CHỈ ADMIN/CANBO) -->
+    <div class="modal fade" id="processModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-black text-slate-800">CẬP NHẬT TRẠNG THÁI HỒ SƠ</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-6">
+                    <form id="process-form">
+                        <input type="hidden" id="edit-index">
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Trạng thái xử lý</label>
+                            <select id="edit-status" class="form-select rounded-xl border-slate-200 py-3 text-sm font-bold">
+                                <option value="Chờ xử lý">⏳ Chờ xử lý</option>
+                                <option value="Đang xử lý">⚙️ Đang xử lý</option>
+                                <option value="Đã hoàn thành">✅ Đã hoàn thành</option>
+                                <option value="Từ chối">❌ Từ chối / Không đủ điều kiện</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Kết quả & Ghi chú</label>
+                            <textarea id="edit-result" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:ring-2 focus:ring-red-500" rows="4" placeholder="Nhập kết quả xử lý chi tiết cho người dân..."></textarea>
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="button" class="flex-1 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold" data-bs-dismiss="modal">HỦY</button>
+                            <button type="submit" class="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold shadow-lg shadow-emerald-500/20">CẬP NHẬT KẾT QUẢ</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const CONFIG = {
-            CSV_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdrdYekjXPY9SzlbGcf4IfFjCTjm6cLB8bfCKl20AeU5sJLYKSg7NU_9Q94NGnEHs4yhf5VZawwlKt/pub?gid=340520941&single=true&output=csv',
-            STORAGE_KEY: 'ansinh_storage_v1'
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSdrdYekjXPY9SzlbGcf4IfFjCTjm6cLB8bfCKl20AeU5sJLYKSg7NU_9Q94NGnEHs4yhf5VZawwlKt/pub?gid=340520941&single=true&output=csv';
+        const STORAGE_KEY = 'mttq_ansinh_v2';
+        
+        const USERS = {
+            'admin': { pass: 'admin@2026', role: 'admin', name: 'Nguyễn Quản Trị' },
+            'canbo': { pass: 'canbo@2026', role: 'canbo', name: 'Trần Cán Bộ' },
+            'user': { pass: 'user@2026', role: 'nguoidan', name: 'Người dân Hòa Bình' }
         };
 
         let rawData = [];
         let map, supportChart;
+        let currentUser = null;
 
-        // --- ĐĂNG NHẬP & PHÂN QUYỀN ---
+        // 1. QUẢN LÝ ĐĂNG NHẬP
         document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            const user = document.getElementById('username').value;
-            if(user === 'admin' || user === 'canbo') {
-                localStorage.setItem('user_role', user);
-                initApp();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            
+            if(USERS[u] && USERS[u].pass === p) {
+                currentUser = USERS[u];
+                localStorage.setItem('session_user', JSON.stringify(currentUser));
+                startApp();
             } else {
-                alert('Tài khoản demo: canbo hoặc admin');
+                alert('Sai tài khoản hoặc mật khẩu!');
             }
         });
 
         document.getElementById('logout-btn').addEventListener('click', () => {
-            localStorage.removeItem('user_role');
+            localStorage.removeItem('session_user');
             location.reload();
         });
 
-        function initApp() {
-            const role = localStorage.getItem('user_role');
-            if(!role) return;
+        function startApp() {
+            document.getElementById('login-screen').classList.add('hidden-role');
+            document.getElementById('app-shell').classList.remove('hidden-role');
+            document.getElementById('display-name').innerText = currentUser.name;
+            const lbl = document.getElementById('role-label');
+            lbl.innerText = currentUser.role;
+            lbl.className = `badge-role badge-${currentUser.role}`;
 
-            document.getElementById('login-screen').classList.add('hidden-element');
-            document.getElementById('app-shell').classList.remove('hidden-element');
-            document.getElementById('role-badge').innerText = `${role}`;
-            
             initMap();
-            loadData();
+            reloadData();
         }
 
-        // --- BẢN ĐỒ GIS (Hòa Bình, Phú Thọ) ---
+        // 2. GIS & BIỂU ĐỒ
         function initMap() {
-            // Tọa độ giả định khu vực Phường Hòa Bình, Tỉnh Phú Thọ
+            if(map) map.remove();
             map = L.map('map').setView([21.3125, 105.2155], 14);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         }
 
-        // --- XỬ LÝ DỮ LIỆU ---
-        async function loadData() {
-            try {
-                const response = await fetch(CONFIG.CSV_URL);
-                const csvText = await response.text();
-                
-                Papa.parse(csvText, {
-                    header: true,
-                    complete: (results) => {
-                        rawData = results.data;
-                        renderUI();
-                    }
-                });
-            } catch (err) {
-                console.error("Lỗi tải dữ liệu", err);
-            }
+        function reloadData() {
+            Papa.parse(CSV_URL, {
+                download: true,
+                header: true,
+                complete: (results) => {
+                    rawData = results.data.filter(r => r['Họ và tên']);
+                    renderTable();
+                    renderStats();
+                }
+            });
         }
 
-        function renderUI() {
-            const tbody = document.getElementById('data-table-body');
-            const savedStates = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEY) || '{}');
-            tbody.innerHTML = '';
+        // 3. RENDER BẢNG DỰA TRÊN ROLE
+        function renderTable() {
+            const head = document.getElementById('table-head');
+            const body = document.getElementById('table-body');
+            const localData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            const role = currentUser.role;
 
-            let counts = { total: 0, urgent: 0, done: 0, supportTypes: {} };
+            // Xây dựng Header
+            let columns = [];
+            if(role === 'nguoidan') {
+                columns = ['Thời gian', 'Đối tượng', 'Chủ hộ', 'Hoàn cảnh', 'Hình thức hỗ trợ', 'Kết quả xử lý'];
+            } else {
+                columns = ['Đăng ký', 'Người gửi', 'SĐT', 'Đối tượng', 'Chủ hộ', 'Minh chứng', 'CCCD/NS', 'Hoàn cảnh', 'Hình thức hỗ trợ', 'Trạng thái', 'Thao tác'];
+            }
 
-            rawData.forEach((row, index) => {
-                if(!row['Họ và tên']) return;
-                counts.total++;
+            head.innerHTML = `<tr>${columns.map(c => `<th>${c}</th>`).join('')}</tr>`;
+            body.innerHTML = '';
+
+            rawData.forEach((row, idx) => {
+                const id = row['Số CCCD'] || idx;
+                const status = localData[id]?.status || 'Chờ xử lý';
+                const result = localData[id]?.result || 'Đang xác minh hồ sơ...';
+
+                let tr = document.createElement('tr');
+                let content = '';
+
+                if(role === 'nguoidan') {
+                    content = `
+                        <td><span class="text-slate-400 text-[10px]">${row['Dấu thời gian']}</span></td>
+                        <td><span class="font-bold text-blue-600">${row['Cột 4']}</span></td>
+                        <td class="font-bold">${row['Họ và tên chủ hộ']}</td>
+                        <td><div class="max-w-[200px] truncate text-xs" title="${row['Hoàn cảnh gia đình']}">${row['Hoàn cảnh gia đình']}</div></td>
+                        <td><span class="px-2 py-1 bg-red-50 text-red-600 rounded-md font-bold text-[10px]">${row['hình thức hỗ trợ']}</span></td>
+                        <td><span class="text-emerald-600 font-bold italic text-xs">${result}</span></td>
+                    `;
+                } else {
+                    content = `
+                        <td><span class="text-[10px] text-slate-400">${row['Dấu thời gian']}</span></td>
+                        <td>
+                            <div class="font-bold">${row['Họ và tên']}</div>
+                            <div class="text-[10px] text-slate-400">${row['Địa chỉ cũ trước sáp nhập']}</div>
+                        </td>
+                        <td class="text-xs font-bold">${row['Số điện thọai']}</td>
+                        <td class="text-xs text-blue-600 font-bold">${row['Cột 4']}</td>
+                        <td class="text-xs font-bold">${row['Họ và tên chủ hộ']}</td>
+                        <td>${row['Vui lòng cung cấp hình ảnh minh chứng (nếu có)'] ? `<img src="${row['Vui lòng cung cấp hình ảnh minh chứng (nếu có)']}" class="img-preview" onclick="window.open(this.src)">` : '-'}</td>
+                        <td>
+                            <div class="text-[11px]"><b>CCCD:</b> ${row['Số CCCD']}</div>
+                            <div class="text-[10px] text-slate-400"><b>NS:</b> ${row['Ngày tháng năm sinh']}</div>
+                        </td>
+                        <td><div class="max-w-[150px] truncate text-[11px]" title="${row['Hoàn cảnh gia đình']}">${row['Hoàn cảnh gia đình']}</div></td>
+                        <td><span class="px-2 py-1 bg-red-600 text-white rounded text-[10px] font-bold">${row['hình thức hỗ trợ']}</span></td>
+                        <td>
+                            <span class="badge-role ${getStatusClass(status)}">${status}</span>
+                        </td>
+                        <td>
+                            <button onclick="openProcessModal('${id}', ${idx})" class="btn btn-sm btn-dark rounded-lg text-[10px] font-bold">XỬ LÝ</button>
+                        </td>
+                    `;
+                }
+                tr.innerHTML = content;
+                body.appendChild(tr);
                 
-                // Lấy trạng thái đã lưu hoặc mặc định từ CSV
-                const currentState = savedStates[index] || row['tình trạng'] || 'Đang xác minh';
-                if(currentState === 'Khẩn cấp') counts.urgent++;
-                if(currentState === 'Đã hoàn thành') counts.done++;
-                
-                // Thống kê biểu đồ
-                const type = row['hình thức hỗ trợ'] || 'Chưa phân loại';
-                counts.supportTypes[type] = (counts.supportTypes[type] || 0) + 1;
+                // Add GIS point
+                if(role !== 'nguoidan') addMapPoint(row, status);
+            });
+        }
 
-                // Render Table
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>
-                        <div class="font-extrabold text-slate-800">${row['Họ và tên']}</div>
-                        <div class="text-[10px] text-slate-400">Chủ hộ: ${row['Họ và tên chủ hộ'] || 'N/A'}</div>
-                    </td>
-                    <td>
-                        <div class="text-xs font-medium"><i class="fa-solid fa-id-card mr-1 text-blue-500"></i> ${row['Số CCCD']}</div>
-                        <div class="text-xs font-medium"><i class="fa-solid fa-phone mr-1 text-green-500"></i> ${row['Số điện thọai']}</div>
-                    </td>
-                    <td>
-                        <div class="text-xs text-slate-600 max-w-[200px] truncate" title="${row['Hoàn cảnh gia đình']}">${row['Hoàn cảnh gia đình']}</div>
-                        <div class="text-[10px] text-slate-400"><i class="fa-solid fa-location-dot mr-1"></i> ${row['Hộ khẩu thường trú']}</div>
-                    </td>
-                    <td>
-                        <span class="px-2 py-1 bg-blue-50 text-blue-600 rounded text-[10px] font-bold border border-blue-100">${row['hình thức hỗ trợ']}</span>
-                    </td>
-                    <td>
-                        <select onchange="updateStatus(${index}, this.value)" class="form-select form-select-sm text-xs font-bold rounded-lg border-slate-200">
-                            <option value="Đang xác minh" ${currentState === 'Đang xác minh' ? 'selected' : ''}>⏳ Đang xác minh</option>
-                            <option value="Khẩn cấp" ${currentState === 'Khẩn cấp' ? 'selected' : ''}>🚨 Khẩn cấp</option>
-                            <option value="Đang xử lý" ${currentState === 'Đang xử lý' ? 'selected' : ''}>🛠️ Đang xử lý</option>
-                            <option value="Đã hoàn thành" ${currentState === 'Đã hoàn thành' ? 'selected' : ''}>✅ Đã hoàn thành</option>
-                        </select>
-                    </td>
-                    <td class="text-center">
-                        <button onclick="viewDetail(${index})" class="text-blue-600 hover:text-blue-800 p-2"><i class="fa-solid fa-eye"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
+        // 4. LOGIC XỬ LÝ HỒ SƠ
+        function openProcessModal(id, idx) {
+            const localData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            document.getElementById('edit-index').value = id;
+            document.getElementById('edit-status').value = localData[id]?.status || 'Chờ xử lý';
+            document.getElementById('edit-result').value = localData[id]?.result || '';
+            new bootstrap.Modal(document.getElementById('processModal')).show();
+        }
 
-                // Thêm Marker vào bản đồ (tọa độ ngẫu nhiên quanh phường để demo GIS)
-                addMapMarker(row, currentState);
+        document.getElementById('process-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-index').value;
+            const status = document.getElementById('edit-status').value;
+            const result = document.getElementById('edit-result').value;
+
+            const localData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            localData[id] = { status, result, updateAt: new Date().toISOString() };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(localData));
+
+            bootstrap.Modal.getInstance(document.getElementById('processModal')).hide();
+            reloadData();
+        });
+
+        // 5. HELPER FUNCTIONS
+        function getStatusClass(s) {
+            if(s === 'Chờ xử lý') return 'bg-amber-100 text-amber-600';
+            if(s === 'Đang xử lý') return 'bg-blue-100 text-blue-600';
+            if(s === 'Đã hoàn thành') return 'bg-emerald-100 text-emerald-600';
+            return 'bg-slate-100 text-slate-600';
+        }
+
+        function renderStats() {
+            const localData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            let stats = { total: rawData.length, pending: 0, processing: 0, completed: 0, types: {} };
+
+            rawData.forEach((row, idx) => {
+                const id = row['Số CCCD'] || idx;
+                const status = localData[id]?.status || 'Chờ xử lý';
+                if(status === 'Chờ xử lý') stats.pending++;
+                else if(status === 'Đang xử lý') stats.processing++;
+                else if(status === 'Đã hoàn thành') stats.completed++;
+
+                const t = row['hình thức hỗ trợ'];
+                stats.types[t] = (stats.types[t] || 0) + 1;
             });
 
-            // Cập nhật thống kê
-            document.getElementById('stat-total').innerText = counts.total;
-            document.getElementById('stat-urgent').innerText = counts.urgent;
-            document.getElementById('stat-done').innerText = counts.done;
-            document.getElementById('stat-pending').innerText = counts.total - counts.done;
+            document.getElementById('stat-total').innerText = stats.total;
+            document.getElementById('stat-pending').innerText = stats.pending;
+            document.getElementById('stat-processing').innerText = stats.processing;
+            document.getElementById('stat-completed').innerText = stats.completed;
 
-            renderChart(counts.supportTypes);
-        }
-
-        function addMapMarker(row, status) {
-            // Demo GIS: Tạo tọa độ giả lập quanh Phường Hòa Bình
-            const lat = 21.3125 + (Math.random() - 0.5) * 0.01;
-            const lng = 105.2155 + (Math.random() - 0.5) * 0.01;
-            
-            const color = status === 'Khẩn cấp' ? 'red' : (status === 'Đã hoàn thành' ? 'green' : 'blue');
-            const circle = L.circleMarker([lat, lng], {
-                radius: 8,
-                fillColor: color,
-                color: "#fff",
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.8
-            }).addTo(map);
-
-            circle.bindPopup(`<b>${row['Họ và tên']}</b><br>${row['hình thức hỗ trợ']}<br>TT: ${status}`);
+            renderChart(stats.types);
         }
 
         function renderChart(data) {
             const ctx = document.getElementById('supportChart').getContext('2d');
             if(supportChart) supportChart.destroy();
-            
             supportChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: Object.keys(data),
                     datasets: [{
                         data: Object.values(data),
-                        backgroundColor: ['#da251d', '#0ea5e9', '#10b981', '#f59e0b', '#8b5cf6']
+                        backgroundColor: ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6']
                     }]
                 },
-                options: { 
-                    responsive: true,
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
-                }
+                options: { plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 9 } } } } }
             });
         }
 
-        // --- XỬ LÝ TRẠNG THÁI (LƯU STORAGE) ---
-        function updateStatus(index, newValue) {
-            const savedStates = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEY) || '{}');
-            savedStates[index] = newValue;
-            localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(savedStates));
+        function addMapPoint(row, status) {
+            // Fake coordinates within Hòa Bình ward area for GIS Demo
+            const lat = 21.3125 + (Math.random() - 0.5) * 0.015;
+            const lng = 105.2155 + (Math.random() - 0.5) * 0.015;
+            const color = status === 'Đã hoàn thành' ? '#10b981' : (status === 'Đang xử lý' ? '#3b82f6' : '#f59e0b');
             
-            // Thông báo lưu tạm thành công
-            const toast = document.createElement('div');
-            toast.className = "fixed bottom-5 right-5 bg-slate-800 text-white px-6 py-3 rounded-xl shadow-2xl z-[9999] animate-bounce";
-            toast.innerHTML = `<i class="fa-solid fa-floppy-disk mr-2 text-emerald-400"></i> Đã lưu tạm trạng thái hồ sơ #${index+1}`;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2000);
-
-            // Cập nhật lại thống kê mà không load lại trang
-            setTimeout(renderUI, 500); 
+            L.circleMarker([lat, lng], {
+                radius: 6,
+                fillColor: color,
+                color: "#fff",
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map).bindPopup(`<b>${row['Họ và tên']}</b><br>${row['hình thức hỗ trợ']}<br>Trạng thái: ${status}`);
         }
 
-        function viewDetail(index) {
-            const data = rawData[index];
-            alert(`CHI TIẾT HỒ SƠ:\n- Họ tên: ${data['Họ và tên']}\n- Hoàn cảnh: ${data['Hoàn cảnh gia đình']}\n- CCCD: ${data['Số CCCD']}`);
-        }
-
-        // Khởi tạo app nếu đã có session
-        window.onload = tryAutoLogin;
-        function tryAutoLogin() {
-            if(localStorage.getItem('user_role')) initApp();
-        }
+        // Check Session
+        window.onload = () => {
+            const session = localStorage.getItem('session_user');
+            if(session) {
+                currentUser = JSON.parse(session);
+                startApp();
+            }
+        };
     </script>
 </body>
 </html>
